@@ -132,7 +132,7 @@ for (auto iter = segment.begin(); iter != segment.end(); iter++)
 }
 ```
 
-3. 绝对鲁棒：题目没有要求NaN的稳定性（位置不变），故将NaN作为一个有实际值的数参与排序，此处将其作为Inf。这导致所有的NaN最终排列在数组末尾。
+3. 绝对鲁棒：题目没有要求NaN的稳定性（位置不变），故将NaN作为一个有实际值的数参与排序，此处将其作为Inf。这导致所有的NaN最终排列在数组末尾。完整代码见NaN_robustness.cpp。
 ```C++
 bool left = isnan(arr[i]), right = isnan(arr[mid + i]);
 if (left && right) {
@@ -155,7 +155,7 @@ else {
 #### 2.2 已尝试
 1. 不递归：
 BintonicSort()已改写为非递归形式。Divide()未改写成功。<br>
-Divide()的原始是Top-Down的形式，不断二分数组，容易导致底层产生许多大小为奇数的子数组。非递归形式是Bottom-Up的形式，子数组大多是2^n，除了最右面的一个可能未填满。因为其他的程序执行流程保持一致，推测是数组划分的差异导致divide()存在bug。<br>
+Divide()的原始是Top-Down的形式，不断二分数组，容易导致底层产生许多大小为奇数的子数组。非递归形式是Bottom-Up的形式，子数组大多是2^n，只有最右面的一个可能未填满。因为其他的程序执行流程没有变化，推测是数组划分的差异导致非递归的divide()存在bug。<br>
 完整代码见no_recursion.cpp。
 2. 不调用函数：
 Divide()需要递归，必然产生调用。
@@ -163,11 +163,11 @@ Divide()需要递归，必然产生调用。
 无全局变量，局部变量全部为int、float或指针类型，无动态内存分配。但存在Divide()函数在栈上的开销。
 
 ### 3 源码说明
-naive.cpp: 分段双调排序，实现了递归的divide()和bitnomicSort()函数
+**naive.cpp:** 分段双调排序，实现了递归的divide()和bitnomicSort()函数
 
-NaN_robustness.cpp: 在naive.cpp的基础上加入了对NaN的处理
+**NaN_robustness.cpp:** 在naive.cpp的基础上加入了对NaN的处理
 
-noRecursion.cpp: 在NaN_robustness.cpp的基础上将bitnomicSort()改写为非递归版本
+**noRecursion.cpp:** 在NaN_robustness.cpp的基础上将bitnomicSort()改写为非递归版本
 
 ### 4 测试数据
 C++标准库rand()产生的伪随机数，随机数种子为默认的0x01。
