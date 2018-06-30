@@ -99,7 +99,7 @@ void bitonicSort(float *arr, int len, bool order)
 ```
 完整代码见naive.cpp。
 
-#### 1.3 n!=2^k的双调排序
+#### 1.3 p!=2^n的双调排序
 根据[1][2]，对于规模为p的数组，2^n < p < 2^(n+1)，只需比较前p-2^n对元素即可。
 
 ![](https://github.com/LUplus/bitonicSort/blob/master/pic/non_2_power.jpg)
