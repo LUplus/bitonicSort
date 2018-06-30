@@ -117,41 +117,41 @@ int cmpTimes = len - mid;
 1. 内存高效：未使用动态内存和STL容器。（为节省时间，测试并行性时使用了std::vector等）
 2. 可并行：限于时间，没有编写并行程序，而是打乱了所有时间复杂度O(n)的循环，模拟并行效果（包括数组各段和段内的执行顺序）。<br>
 此时得到的排序结果仍然正确，完整代码见parallel.cpp。
-```C++
-std::vector<int> segment;
-for (int i = 0; i < m; i++)
-{
-  segment.push_back(i);
-}
-std::random_shuffle(segment.begin(), segment.end());
+    ```C++
+    std::vector<int> segment;
+    for (int i = 0; i < m; i++)
+    {
+      segment.push_back(i);
+    }
+    std::random_shuffle(segment.begin(), segment.end());
 
-// Each segment
-for (auto iter = segment.begin(); iter != segment.end(); iter++)
-{
-  int k = *iter;
-  divide(data + seg_start[k], seg_start[k + 1] - seg_start[k], ASCEND_ORDER);
-}
-```
+    // Each segment
+    for (auto iter = segment.begin(); iter != segment.end(); iter++)
+    {
+      int k = *iter;
+      divide(data + seg_start[k], seg_start[k + 1] - seg_start[k], ASCEND_ORDER);
+    }
+    ```
 
 3. 绝对鲁棒：题目没有要求NaN的稳定性（位置不变），故将NaN作为一个有实际值的数参与排序，此处将其作为Inf。这导致所有的NaN最终排列在数组末尾。完整代码见NaN_robustness.cpp。
-```C++
-bool left = isnan(arr[i]), right = isnan(arr[mid + i]);
-if (left && right) {
-  continue;
-}
-else if (left) {
-  if ((INFINITY > arr[mid + i]) == order)
-    swap(arr[i], arr[mid + i]);
-}
-else if (right) {
-  if ((arr[i] > INFINITY) == order)
-    swap(arr[i], arr[mid + i]);
-}
-else {
-  if ((arr[i] > arr[mid + i]) == order)
-    swap(arr[i], arr[mid + i]);
-}
-```
+    ```C++
+    bool left = isnan(arr[i]), right = isnan(arr[mid + i]);
+    if (left && right) {
+      continue;
+    }
+    else if (left) {
+      if ((INFINITY > arr[mid + i]) == order)
+        swap(arr[i], arr[mid + i]);
+    }
+    else if (right) {
+      if ((arr[i] > INFINITY) == order)
+        swap(arr[i], arr[mid + i]);
+    }
+    else {
+      if ((arr[i] > arr[mid + i]) == order)
+        swap(arr[i], arr[mid + i]);
+    }
+    ```
 
 #### 2.2 已尝试
 1. 不递归：
@@ -194,17 +194,17 @@ C++标准库rand()产生的伪随机数，随机数种子为默认的0x01。
 ### 6 测试起止时间
 - **6.28**
 
-**11:00-14:00** 查找双调排序资料
+    **11:00-14:00** 查找双调排序资料
 
-**15:00-16:30** 自主实现初版代码
+    **15:00-16:30** 自主实现初版代码
 
-**16:30-23:00** Debug不顺，参考了别人的实现[3][4]
+    **16:30-23:00** Debug不顺，参考了别人的实现[3][4]
 
 - **6.29**
 
-**7:30-11:00** 完成加分挑战
+    **7:30-11:00** 完成加分挑战
 
-**13:00-17:00** 撰写报告
+    **13:00-17:00** 撰写报告
 
 ![](https://github.com/LUplus/bitonicSort/blob/master/pic/git_commit_history.png)
 
