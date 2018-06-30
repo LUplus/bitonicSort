@@ -62,13 +62,42 @@ float data[5] = {0.2, 0.8, 0.4, 0.5, 0.6};
 双调排序需要输入数组满足双调性。换言之，可被分割成两个单调数组。
 1. 首先不断二分目标数组，直至其大小为1或2，此时数组一定是单调的。
 2. 两个这样的数组，连接在一起满足双调性。对其进行双调排序，输出数组满足单调性。
-3. 通过bottom-up的方式不断合并两数组，对合并后的数组，相邻两两间单调性应当相反，如图中的蓝/绿色网络。合并的方式即双调排序。
+3. 通过bottom-up的方式不断合并两数组，对合并后的数组，相邻两两间单调性应当相反，如图中的蓝/绿色网络。合并的方式即1.1中的双调排序。
 
 ![](https://github.com/LUplus/bitonicSort/blob/master/pic/sortNetwork.png)
 
-如图，每列蓝绿色排序网络即一层Divide()调用。
-每列网络内部又有多列红色小网络，即逐层向下的BitonicSort()调用。
-两函数的完整代码见naive.cpp。
+如图，每列蓝绿色排序网络是一层Divide()调用，即1.2中的一次分治。
+```C++
+void divide(float *arr, int len, bool order)
+{
+  if (len > 1)
+  {
+    int mid = len >> 1;
+    divide(arr, mid, !order);
+    divide(arr + mid, len - mid, order);
+    bitonicSort(arr, len, order);
+  }
+}
+```
+每列网络内部又有多列红色小网络，即一次1.1中逐层向下的BitonicSort()调用。
+```C++
+void bitonicSort(float *arr, int len, bool order)
+{
+  if (len > 1)
+  {
+    int mid = greatest_powerOfTwo_lessThan(len);
+    int cmpTimes = len - mid;
+
+    for (int i = 0; i < cmpTimes; i++)
+      if ((arr[i] > arr[mid + i]) == order)
+        swap(arr[i], arr[mid + i]);
+
+    bitonicSort(arr, mid, order);
+    bitonicSort(arr + mid, len - mid, order);
+  }
+}
+```
+完整代码见naive.cpp。
 
 #### 1.3 n!=2^k的双调排序
 根据[1][2]，对于规模为p的数组，2^n < p < 2^(n+1)，只需比较前p-2^n对元素即可。
@@ -79,36 +108,55 @@ float data[5] = {0.2, 0.8, 0.4, 0.5, 0.6};
 
 递归比较网络，最终可以得到有序序列。
 
-注意到对最后两个1的比较不可能发生交换，因而它们是多余的，只需比较前p-2^n对数据。
+注意到对最后两个1的比较不可能发生交换，因而它们是多余的，只需比较前p-2^n对数据。对应代码为刚才BitonicSort()中的
+```C++
+int cmpTimes = len - mid;
+```
 
 ### 2 加分挑战
 #### 2.1 已完成
-1. 内存高效：未使用动态内存和STL容器。（为节省时间，并行性测试时使用了vector等容器）
-2. 可并行：限于时间，没有编写并行程序，而是打乱了时间复杂度O(n)的循环进行模拟（包括各段和段内的执行顺序）。此时得到的排序结果仍然正确，完整代码见parallel.cpp。
-3. 绝对鲁棒：题目没有要求NaN的稳定性（位置不变），故将NaN作为一个有实际值的数参与排序，此处将其作为Inf。这导致所有的NaN最终排列在数组末尾。
+1. 内存高效：未使用动态内存和STL容器。（为节省时间，测试并行性时使用了vector等容器）
+2. 可并行：限于时间，没有编写并行程序，而是打乱了所有时间复杂度O(n)的循环，模拟并行效果（包括各段和段内的执行顺序）。<br>
 ```C++
-  bool left = isnan(arr[i]), right = isnan(arr[mid + i]);
-  if (left && right) {
-    continue;
-  }
-  else if (left) {
-    if ((INFINITY > arr[mid + i]) == order)
-      swap(arr[i], arr[mid + i]);
-  }
-  else if (right) {
-    if ((arr[i] > INFINITY) == order)
-      swap(arr[i], arr[mid + i]);
-  }
-  else {
-    if ((arr[i] > arr[mid + i]) == order)
-      swap(arr[i], arr[mid + i]);
-  }
+std::vector<int> segment;
+for (int i = 0; i < m; i++)
+{
+  segment.push_back(i);
+}
+std::random_shuffle(segment.begin(), segment.end());
+
+// Each segment
+for (auto iter = segment.begin(); iter != segment.end(); iter++)
+{
+  int k = *iter;
+  divide(data + seg_start[k], seg_start[k + 1] - seg_start[k], ASCEND_ORDER);
+}
+```
+此时得到的排序结果仍然正确，完整代码见parallel.cpp。
+3. 绝对鲁棒：题目没有要求NaN的稳定性（位置不变），故将NaN作为一个有实际值的数参与排序，此处将其作为Inf。这导致所有的NaN最终排列在数组末尾。<br>
+```C++
+bool left = isnan(arr[i]), right = isnan(arr[mid + i]);
+if (left && right) {
+  continue;
+}
+else if (left) {
+  if ((INFINITY > arr[mid + i]) == order)
+    swap(arr[i], arr[mid + i]);
+}
+else if (right) {
+  if ((arr[i] > INFINITY) == order)
+    swap(arr[i], arr[mid + i]);
+}
+else {
+  if ((arr[i] > arr[mid + i]) == order)
+    swap(arr[i], arr[mid + i]);
+}
 ```
 
 #### 2.2 已尝试
 1. 不递归：
 BintonicSort()已改写为非递归形式。Divide()未改写成功。<br>
-Divide()的原始是Top-Down的形式，不断二分数组，容易导致底层产生许多大小为奇数的子数组。非递归形式是Bottom-Up的形式，子数组大多是2^n，除了最右面的一个可能不是。可能是数组划分的差异导致divide()存在bug。<br>
+Divide()的原始是Top-Down的形式，不断二分数组，容易导致底层产生许多大小为奇数的子数组。非递归形式是Bottom-Up的形式，子数组大多是2^n，除了最右面的一个可能未填满。因为其他的程序执行流程保持一致，推测是数组划分的差异导致divide()存在bug。<br>
 完整代码见no_recursion.cpp。
 2. 不调用函数：
 Divide()需要递归，必然产生调用。
@@ -117,11 +165,15 @@ Divide()需要递归，必然产生调用。
 
 ### 3 源码说明
 naive.cpp: 分段双调排序，实现了递归的divide()和bitnomicSort()函数
+
 NaN_robustness.cpp: 在naive.cpp的基础上加入了对NaN的处理
+
 noRecursion.cpp: 在NaN_robustness.cpp的基础上将bitnomicSort()改写为非递归版本
 
 ### 4 测试数据
-C++标准库rand()产生的伪随机数。手动进行了数据规模从1到50000，包含2^(n+1),2^(n-1)等corner case的测试，均与STL qsort()输出一致。
+C++标准库rand()产生的伪随机数，随机数种子为默认的0x01。
+
+手动进行了针对各版本代码、数据规模从1到50000，包含2^(n+1),2^(n-1)等corner cases的测试，均与STL qsort()输出一致。
 
 ### 5 性能分析
 #### 5.1 时间复杂度
@@ -142,9 +194,9 @@ C++标准库rand()产生的伪随机数。手动进行了数据规模从1到5000
 
 **15:00-16:30** 初版代码，自主实现
 
-**16:30-23:00** 代码排错不顺，参考了别人的实现
+**16:30-23:00** 代码排错不顺，参考了别人的实现[3][4]
 
-**6.29
+**6.29**
 
 **7:30-11:00** 完成加分挑战
 
