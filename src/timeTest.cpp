@@ -3,7 +3,9 @@
 
 #define ASCEND_ORDER 1
 #define DESCEND_ORDER 0
-#define DATA_SIZE 4095
+#define DATA_MIN_SIZE 30000
+#define DATA_SIZE 40000
+#define DATA_SIZE_INV 100
 
 void segmentedBitonicSort(float* data, int* seg_id, int* seg_start, int n, int m);
 void divide(float *arr, int len, bool order);
@@ -52,28 +54,26 @@ int main(void)
 		contrast[i] = NAN;
 	}
 
-	/* Comparsion */
-	// printFloatArray(data, n);
-	std::qsort(contrast, DATA_SIZE / 2, sizeof contrast[0], qcmp);
-	std::qsort(contrast + DATA_SIZE / 2, DATA_SIZE - DATA_SIZE / 2, sizeof contrast[0], qcmp);
-	// printFloatArray(contrast, n);
-
-	/* Test */
-	segmentedBitonicSort(data, seg_id, seg_start, n, m);
-	// printFloatArray(data, n);
-
-	int counter = 0;
-	for (size_t i = 0; i < DATA_SIZE; i++)
+	/* Time Test */
+	for (int t = DATA_MIN_SIZE; t < DATA_SIZE; t += DATA_SIZE_INV)
 	{
-		if (data[i] != contrast[i])
+		seg_start[1] = t / 2;
+		seg_start[2] = t;
+
+		clock_t sum = 0;
+		for (int i = 0; i < 10; i++)
 		{
-			if (isnan(data[i]) && isnan(contrast[i]))
-				continue;
-			printf("%.1f %.1f\n", data[i], contrast[i]);
-			counter++;
+			clock_t begin = clock();
+			segmentedBitonicSort(data, seg_id, seg_start, n, m);
+			clock_t finish = clock();
+			sum += finish - begin;
 		}
+
+		std::cout << sum / 10 << std::endl;
+
+		for (int i = 0; i < t; i++)
+			data[i] = contrast[i];
 	}
-	printf("Error: %d/%d.\n", counter, DATA_SIZE);
 
 	system("PAUSE");
 }
@@ -88,17 +88,9 @@ int main(void)
 */
 void segmentedBitonicSort(float *data, int *seg_id, int *seg_start, int n, int m)
 {
-	std::vector<int> segment;
-	for (int i = 0; i < m; i++)
-	{
-		segment.push_back(i);
-	}
-	std::random_shuffle(segment.begin(), segment.end());
-
 	// Each segment
-	for (auto iter = segment.begin(); iter != segment.end(); iter++)
+	for (int k = 0; k < m; k++)
 	{
-		int k = *iter;
 		divide(data + seg_start[k], seg_start[k + 1] - seg_start[k], ASCEND_ORDER);
 	}
 }
@@ -137,17 +129,8 @@ void bitonicSort(float *arr, int len, bool order)
 		for (int step = greatest_powerOfTwo_lessThan(len); step >= 1; step >>= 1)
 		{
 			int c_left_min = 0, c_right_min = 0;
-			
-			std::vector<int> left_inv;
 			for (c_left_min = left_min; c_left_min < right_max; c_left_min += 2 * step)
 			{
-				left_inv.push_back(c_left_min);
-			}
-			std::random_shuffle(left_inv.begin(), left_inv.end());
-
-			for (auto iter = left_inv.begin(); iter != left_inv.end(); iter++)
-			{
-				c_left_min = *iter;
 				c_right_min = c_left_min + step;
 
 				// The rightmost interval has less times of comparison
